@@ -5,6 +5,8 @@
 
 int main()
 {
-    CompilingFile();
+    char file_name[] = "../../ConsolCommandStack/ConsolCommandStack/files/quadratic_equation.txt";
+    char binary_file[] = "../../ConsolCommandStack/ConsolCommandStack/files/_quadratic_equation.txt";
+    CompilingFile(file_name, binary_file);
 }
 

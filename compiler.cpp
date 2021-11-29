@@ -20,7 +20,7 @@ void BeginingIdentity(FILE* dfile, char** p, int lines, char data_labels[][10], 
         exit(2);
     }
     char command[COM_LEN] = {};
-    int digit = 0;
+    float digit = 0;
     char reg[50] = {};
     int size = 0;
     int ret_index = 0;
@@ -28,7 +28,7 @@ void BeginingIdentity(FILE* dfile, char** p, int lines, char data_labels[][10], 
     {
         bool wrong_command = 0;
 
-        if (sscanf(p[k], "%s [%s + %d]", command, reg, &digit) == 3)
+        if (sscanf(p[k], "%s [%s + %f]", command, reg, &digit) == 3)
         {
             if (!strcmp(command, "pop"))
             {
@@ -37,7 +37,7 @@ void BeginingIdentity(FILE* dfile, char** p, int lines, char data_labels[][10], 
                 data[i++] = 1;
                 data[i++] = 1;
                 FillRegField(data, &i, reg);
-                SeparateIntToChar(data, &i, digit);
+                SeparateFloatToChar(data, &i, digit);
             }
             else if (!strcmp(command, "push"))
             {
@@ -52,7 +52,7 @@ void BeginingIdentity(FILE* dfile, char** p, int lines, char data_labels[][10], 
                 wrong_command = 1;
             }
         }
-        else if (sscanf(p[k], "%s %s + %d", command, reg, &digit) == 3)
+        else if (sscanf(p[k], "%s %s + %f", command, reg, &digit) == 3)
         {
             if (!strcmp(command, "push"))
             {
@@ -61,27 +61,27 @@ void BeginingIdentity(FILE* dfile, char** p, int lines, char data_labels[][10], 
                 data[i++] = 1;
                 data[i++] = 0;
                 FillRegField(data, &i, reg);
-                SeparateIntToChar(data, &i, digit);
+                SeparateFloatToChar(data, &i, digit);
             }
             else
             {
                 wrong_command = 1;
             }
         }
-        else if (sscanf(p[k], "%s %[^,],%d", command, reg, &digit) == 3)
+        else if (sscanf(p[k], "%s %[^,],%f", command, reg, &digit) == 3)
         {
             if (!strcmp(command, "in"))
             {
                 data[i++] = IN;
                 FillRegField(data, &i, reg);
-                SeparateIntToChar(data, &i, digit);
+                SeparateFloatToChar(data, &i, digit);
             }
             else
             {
                 wrong_command = 1;
             }
         }
-        else if (sscanf(p[k], "%s [%d]", command, &digit) == 2)
+        else if (sscanf(p[k], "%s [%f]", command, &digit) == 2)
         {
             if (!strcmp(command, "pop"))
             {
@@ -89,7 +89,7 @@ void BeginingIdentity(FILE* dfile, char** p, int lines, char data_labels[][10], 
                 data[i++] = 0;
                 data[i++] = 1;
                 data[i++] = 1;
-                SeparateIntToChar(data, &i, digit);
+                SeparateFloatToChar(data, &i, digit);
             }
             else if (!strcmp(command, "push"))
             {
@@ -97,7 +97,7 @@ void BeginingIdentity(FILE* dfile, char** p, int lines, char data_labels[][10], 
                 data[i++] = 0;
                 data[i++] = 1;
                 data[i++] = 1;
-                SeparateIntToChar(data, &i, digit);
+                SeparateFloatToChar(data, &i, digit);
             }
             else
             {
@@ -127,7 +127,7 @@ void BeginingIdentity(FILE* dfile, char** p, int lines, char data_labels[][10], 
                 wrong_command = 1;
             }
         }
-        else if (sscanf(p[k], "%s %d", command, &digit) == 2)
+        else if (sscanf(p[k], "%s %f", command, &digit) == 2)
         {
             if (!strcmp(command, "push"))
             {
@@ -135,12 +135,12 @@ void BeginingIdentity(FILE* dfile, char** p, int lines, char data_labels[][10], 
                 data[i++] = 0;
                 data[i++] = 1;
                 data[i++] = 0;
-                SeparateIntToChar(data, &i, digit);
+                SeparateFloatToChar(data, &i, digit);
             }
             else if (!strcmp(command, "jmp"))
             {
                 data[i++] = JMP;
-                SeparateIntToChar(data, &i, digit);
+                SeparateFloatToChar(data, &i, digit);
             }
             else
             {
@@ -159,7 +159,7 @@ void BeginingIdentity(FILE* dfile, char** p, int lines, char data_labels[][10], 
             }
             else if (!strcmp(command, "push"))
             {
-                data[i++] = POP;
+                data[i++] = PUSH;
                 data[i++] = 1;
                 data[i++] = 0;
                 data[i++] = 0;
@@ -247,6 +247,10 @@ void BeginingIdentity(FILE* dfile, char** p, int lines, char data_labels[][10], 
             {
                 data[i++] = DIV;
             }
+            else if (!strcmp(command, "sqrt"))
+            {
+                data[i++] = SQRT;
+            }
             else if (!strcmp(command, "out"))
             {
                 data[i++] = OUT;
@@ -285,9 +289,9 @@ void BeginingIdentity(FILE* dfile, char** p, int lines, char data_labels[][10], 
 }
 
 
-void CompilingFile()
+void CompilingFile(char* file_name, char* binary_file)
 {
-    FILE* file = fopen("../../ConsolCommandStack/ConsolCommandStack/files/commands.txt", "rb");
+    FILE* file = fopen(file_name, "rb");
     if (file == NULL)
     {
         fputs("Error file open\n", stderr);
@@ -319,7 +323,7 @@ void CompilingFile()
     SeparateTextToLines(text, p);
     free(text);
 
-    FILE* dfile = fopen("../../ConsolCommandStack/ConsolCommandStack/files/_commands.txt", "w");
+    FILE* dfile = fopen(binary_file, "w");
     if (dfile == NULL)
     {
         fputs("Error file open\n", stderr);
@@ -356,6 +360,16 @@ void FillRegField(char* data, int* i, char* reg)
 }
 
 
+void SeparateFloatToChar(char* data, int* i, float digit)
+{
+    types value;
+    value.f = digit;
+    for (int k = 0; k < sizeof(digit); k++)
+    {
+        data[(*i)++] = value.b[k];
+    }
+}
+
 void SeparateIntToChar(char* data, int* i, int digit)
 {
     data[(*i)++] = digit & 0xFF;
@@ -372,12 +386,12 @@ void PreIdentity(char** p, int lines, char data_labels[][10], int adress[])
     char one[10] = {};
     char two[10] = {};
     char three[10] = {};
-    int dig = 0;
+    float dig = 0;
     int i = 0;
     int n_lab = 0;
     for (int k = 0; k < lines; k++)
     {
-        if (sscanf(p[k], "%s [%s + %s]", one, two, three) == 3 || sscanf(p[k], "%s %[^,],%d", one, two, &dig) == 3)
+        if (sscanf(p[k], "%s [%s + %s]", one, two, three) == 3 || sscanf(p[k], "%s %[^,],%f", one, two, &dig) == 3)
         {
             if (!strcmp(one, "push"))
             {
@@ -396,7 +410,7 @@ void PreIdentity(char** p, int lines, char data_labels[][10], int adress[])
         {
             i += 9;
         }
-        else if (sscanf(p[k], "%s [%d]", one, &dig) == 2 || sscanf(p[k], "%s %d", one, &dig) == 2)
+        else if (sscanf(p[k], "%s [%f]", one, &dig) == 2 || sscanf(p[k], "%s %f", one, &dig) == 2)
         {
             if (!strcmp(one, "push") || !strcmp(one, "pop"))
             {

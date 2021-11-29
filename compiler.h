@@ -2,10 +2,17 @@
 #include <stdio.h>
 
 
+union types
+{
+	float f;
+	unsigned char b[4];
+};
+
+
 /// <summary>
 /// Create file with binary code
 /// </summary>
-void CompilingFile();
+void CompilingFile(char* file_name, char* binary_file);
 
 
 /// <summary>
@@ -25,12 +32,16 @@ void BeginingIdentity(FILE* dfile, char** p, int lines, char data_labels[][10], 
 /// <param name="reg">Name of register</param>
 void FillRegField(char* data, int* i, char* reg);
 
+
 /// <summary>
 /// Separate int figure to 4 char type
 /// </summary>
 /// <param name="data">Data array</param>
 /// <param name="i">Current position in data array</param>
 /// <param name="digit">Transmitted figure</param>
+void SeparateFloatToChar(char* data, int* i, float digit);
+
+
 void SeparateIntToChar(char* data, int* i, int digit);
 
 
