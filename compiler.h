@@ -2,6 +2,35 @@
 #include <stdio.h>
 
 
+enum Command
+{
+    PUSH = 1,
+    POP,
+    ADD,
+    SUB,
+    MUL,
+    DIV,
+    SQRT,
+    OUT,
+    DMP,
+    HLT = 11,
+    IN,
+    JMP,
+    JA,
+    CALL,
+    RET
+};
+
+
+enum CommandSize
+{
+    SIMPLEPUSH = 5,
+    SIMPLEPOP = 4,
+    DIFPOP = 9,
+    DIFPUSH = 8,
+};
+
+
 union types
 {
 	float f;
@@ -46,7 +75,7 @@ void SeparateIntToChar(char* data, int* i, int digit);
 
 
 /// <summary>
-/// Check existence of labels
+/// Check existence of labels and count size of every command
 /// </summary>
 /// <param name="p">Lines of data</param>
 /// <param name="lines">Number of lines</param>

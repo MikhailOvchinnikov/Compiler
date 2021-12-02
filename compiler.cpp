@@ -2,7 +2,7 @@
 #define COM_LEN 50
 
 #include "compiler.h"
-#include "commands.h"
+//Header from the SortOnegin project
 #include "..\..\Sort_Onegin\Sort_Onegin\sort_text.h"
 #include <string.h>
 #include <stdio.h>
@@ -32,7 +32,7 @@ void BeginingIdentity(FILE* dfile, char** p, int lines, char data_labels[][10], 
         {
             if (!strcmp(command, "pop"))
             {
-                data[i++] = POP;
+                data[i++] = Command::POP;
                 data[i++] = 1;
                 data[i++] = 1;
                 data[i++] = 1;
@@ -41,7 +41,7 @@ void BeginingIdentity(FILE* dfile, char** p, int lines, char data_labels[][10], 
             }
             else if (!strcmp(command, "push"))
             {
-                data[i++] = PUSH;
+                data[i++] = Command::PUSH;
                 data[i++] = 1;
                 data[i++] = 1;
                 data[i++] = 1;
@@ -56,7 +56,7 @@ void BeginingIdentity(FILE* dfile, char** p, int lines, char data_labels[][10], 
         {
             if (!strcmp(command, "push"))
             {
-                data[i++] = PUSH;
+                data[i++] = Command::PUSH;
                 data[i++] = 1;
                 data[i++] = 1;
                 data[i++] = 0;
@@ -72,7 +72,7 @@ void BeginingIdentity(FILE* dfile, char** p, int lines, char data_labels[][10], 
         {
             if (!strcmp(command, "in"))
             {
-                data[i++] = IN;
+                data[i++] = Command::IN;
                 FillRegField(data, &i, reg);
                 SeparateFloatToChar(data, &i, digit);
             }
@@ -85,7 +85,7 @@ void BeginingIdentity(FILE* dfile, char** p, int lines, char data_labels[][10], 
         {
             if (!strcmp(command, "pop"))
             {
-                data[i++] = POP;
+                data[i++] = Command::POP;
                 data[i++] = 0;
                 data[i++] = 1;
                 data[i++] = 1;
@@ -93,7 +93,7 @@ void BeginingIdentity(FILE* dfile, char** p, int lines, char data_labels[][10], 
             }
             else if (!strcmp(command, "push"))
             {
-                data[i++] = PUSH;
+                data[i++] = Command::PUSH;
                 data[i++] = 0;
                 data[i++] = 1;
                 data[i++] = 1;
@@ -108,7 +108,7 @@ void BeginingIdentity(FILE* dfile, char** p, int lines, char data_labels[][10], 
         {
             if (!strcmp(command, "pop"))
             {
-                data[i++] = POP;
+                data[i++] = Command::POP;
                 data[i++] = 1;
                 data[i++] = 0;
                 data[i++] = 1;
@@ -116,7 +116,7 @@ void BeginingIdentity(FILE* dfile, char** p, int lines, char data_labels[][10], 
             }
             else if (!strcmp(command, "push"))
             {
-                data[i++] = PUSH;
+                data[i++] = Command::PUSH;
                 data[i++] = 1;
                 data[i++] = 0;
                 data[i++] = 1;
@@ -131,7 +131,7 @@ void BeginingIdentity(FILE* dfile, char** p, int lines, char data_labels[][10], 
         {
             if (!strcmp(command, "push"))
             {
-                data[i++] = PUSH;
+                data[i++] = Command::PUSH;
                 data[i++] = 0;
                 data[i++] = 1;
                 data[i++] = 0;
@@ -139,7 +139,7 @@ void BeginingIdentity(FILE* dfile, char** p, int lines, char data_labels[][10], 
             }
             else if (!strcmp(command, "jmp"))
             {
-                data[i++] = JMP;
+                data[i++] = Command::JMP;
                 SeparateFloatToChar(data, &i, digit);
             }
             else
@@ -151,7 +151,7 @@ void BeginingIdentity(FILE* dfile, char** p, int lines, char data_labels[][10], 
         {
             if (!strcmp(command, "pop"))
             {
-                data[i++] = POP;
+                data[i++] = Command::POP;
                 data[i++] = 1;
                 data[i++] = 0;
                 data[i++] = 0;
@@ -159,7 +159,7 @@ void BeginingIdentity(FILE* dfile, char** p, int lines, char data_labels[][10], 
             }
             else if (!strcmp(command, "push"))
             {
-                data[i++] = PUSH;
+                data[i++] = Command::PUSH;
                 data[i++] = 1;
                 data[i++] = 0;
                 data[i++] = 0;
@@ -167,7 +167,7 @@ void BeginingIdentity(FILE* dfile, char** p, int lines, char data_labels[][10], 
             }
             else if (!strcmp(command, "jmp"))
             {
-                data[i++] = JMP;
+                data[i++] = Command::JMP;
                 for (int p = 0; p < 10; p++)
                 {
                     if (strlen(data_labels[p]) == 0)
@@ -184,7 +184,7 @@ void BeginingIdentity(FILE* dfile, char** p, int lines, char data_labels[][10], 
             }
             else if (!strcmp(command, "ja"))
             {
-                data[i++] = JA;
+                data[i++] = Command::JA;
                 for (int p = 0; p < 10; p++)
                 {
                     if (strlen(data_labels[p]) == 0)
@@ -201,7 +201,7 @@ void BeginingIdentity(FILE* dfile, char** p, int lines, char data_labels[][10], 
             }
             else if (!strcmp(command, "call"))
             {
-                data[i++] = CALL;
+                data[i++] = Command::CALL;
                 for (int p = 0; p < 10; p++)
                 {
                     if (strlen(data_labels[p]) == 0)
@@ -226,46 +226,46 @@ void BeginingIdentity(FILE* dfile, char** p, int lines, char data_labels[][10], 
         {
             if (!strcmp(command, "pop"))
             {
-                data[i++] = POP;
+                data[i++] = Command::POP;
                 data[i++] = 0;
                 data[i++] = 0;
                 data[i++] = 0;
             }
             else if (!strcmp(command, "add"))
             {
-                data[i++] = ADD;
+                data[i++] = Command::ADD;
             }
             else if (!strcmp(command, "sub"))
             {
-                data[i++] = SUB;
+                data[i++] = Command::SUB;
             }
             else if (!strcmp(command, "mul"))
             {
-                data[i++] = MUL;
+                data[i++] = Command::MUL;
             }
             else if (!strcmp(command, "div"))
             {
-                data[i++] = DIV;
+                data[i++] = Command::DIV;
             }
             else if (!strcmp(command, "sqrt"))
             {
-                data[i++] = SQRT;
+                data[i++] = Command::SQRT;
             }
             else if (!strcmp(command, "out"))
             {
-                data[i++] = OUT;
+                data[i++] = Command::OUT;
             }
             else if (!strcmp(command, "dmp"))
             {
-                data[i++] = DMP;
+                data[i++] = Command::DMP;
             }
             else if (!strcmp(command, "hlt"))
             {
-                data[i++] = HLT;
+                data[i++] = Command::HLT;
             }
             else if (!strcmp(command, "ret"))
             {
-                data[i++] = RET;
+                data[i++] = Command::RET;
             }
             else
             {
