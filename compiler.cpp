@@ -7,17 +7,29 @@
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <errno.h>
+#include <stdarg.h>
 
 
+void FileLogComp(const char* format, ...)
+{
+    static FILE* log_file = fopen("comp_log.txt", "w");
+    va_list args;
+    va_start(args, format);
+    vfprintf(log_file, format, args);
+    va_end(args);
+}
 
-void BeginingIdentity(FILE* dfile, char** p, int lines, char data_labels[][10], int adress[])
+
+int BeginingIdentity(FILE* dfile, char** p, int lines, char data_labels[][10], int adress[])
 {
     char* data = (char*)calloc(lines * 20, sizeof(char));
 
     if (data == NULL)
     {
-        fputs("Error memory allocation for *data\n", stderr);
-        exit(2);
+        FileLogComp("Error memory allocation for *data\n");
+        errno = ErrorCode::ERRMEMORY;
+        return -1;
     }
     char command[COM_LEN] = {};
     float digit = 0;
@@ -26,8 +38,6 @@ void BeginingIdentity(FILE* dfile, char** p, int lines, char data_labels[][10], 
     int ret_index = 0;
     for (int i = 0, k = 0; k < lines; k++)
     {
-        bool wrong_command = 0;
-
         if (sscanf(p[k], "%s [%s + %f]", command, reg, &digit) == 3)
         {
             if (!strcmp(command, "pop"))
@@ -46,10 +56,20 @@ void BeginingIdentity(FILE* dfile, char** p, int lines, char data_labels[][10], 
                 data[i++] = 1;
                 data[i++] = 1;
                 FillRegField(data, &i, reg);
+                SeparateFloatToChar(data, &i, digit);
+            }
+            else if (!strcmp(command, "out"))
+            {
+                data[i++] = Command::OUT;
+                data[i++] = 1;
+                data[i++] = 1;
+                data[i++] = 1;
+                FillRegField(data, &i, reg);
+                SeparateFloatToChar(data, &i, digit);
             }
             else
             {
-                wrong_command = 1;
+                errno = ErrorCode::ERRCOMMAND;
             }
         }
         else if (sscanf(p[k], "%s %s + %f", command, reg, &digit) == 3)
@@ -63,22 +83,31 @@ void BeginingIdentity(FILE* dfile, char** p, int lines, char data_labels[][10], 
                 FillRegField(data, &i, reg);
                 SeparateFloatToChar(data, &i, digit);
             }
-            else
+            else if (!strcmp(command, "out"))
             {
-                wrong_command = 1;
-            }
-        }
-        else if (sscanf(p[k], "%s %[^,],%f", command, reg, &digit) == 3)
-        {
-            if (!strcmp(command, "in"))
-            {
-                data[i++] = Command::IN;
+                data[i++] = Command::OUT;
+                data[i++] = 1;
+                data[i++] = 1;
+                data[i++] = 0;
                 FillRegField(data, &i, reg);
                 SeparateFloatToChar(data, &i, digit);
             }
             else
             {
-                wrong_command = 1;
+                errno = ErrorCode::ERRCOMMAND;
+            }
+        }
+        else if (sscanf(p[k], "%s %[^,],%f", command, reg, &digit) == 3)
+        {
+            if (!strcmp(command, "mov"))
+            {
+                data[i++] = Command::MOV;
+                FillRegField(data, &i, reg);
+                SeparateFloatToChar(data, &i, digit);
+            }
+            else
+            {
+                errno = ErrorCode::ERRCOMMAND;
             }
         }
         else if (sscanf(p[k], "%s [%f]", command, &digit) == 2)
@@ -99,9 +128,17 @@ void BeginingIdentity(FILE* dfile, char** p, int lines, char data_labels[][10], 
                 data[i++] = 1;
                 SeparateFloatToChar(data, &i, digit);
             }
+            else if (!strcmp(command, "out"))
+            {
+                data[i++] = Command::OUT;
+                data[i++] = 0;
+                data[i++] = 1;
+                data[i++] = 1;
+                SeparateFloatToChar(data, &i, digit);
+            }
             else
             {
-                wrong_command = 1;
+                errno = ErrorCode::ERRCOMMAND;
             }
         }
         else if (sscanf(p[k], "%s [%s]", command, reg) == 2)
@@ -122,9 +159,17 @@ void BeginingIdentity(FILE* dfile, char** p, int lines, char data_labels[][10], 
                 data[i++] = 1;
                 FillRegField(data, &i, reg);
             }
+            else if (!strcmp(command, "out"))
+            {
+                data[i++] = Command::OUT;
+                data[i++] = 1;
+                data[i++] = 0;
+                data[i++] = 1;
+                FillRegField(data, &i, reg);
+            }
             else
             {
-                wrong_command = 1;
+                errno = ErrorCode::ERRCOMMAND;
             }
         }
         else if (sscanf(p[k], "%s %f", command, &digit) == 2)
@@ -142,9 +187,17 @@ void BeginingIdentity(FILE* dfile, char** p, int lines, char data_labels[][10], 
                 data[i++] = Command::JMP;
                 SeparateFloatToChar(data, &i, digit);
             }
+            else if (!strcmp(command, "out"))
+            {
+                data[i++] = Command::OUT;
+                data[i++] = 0;
+                data[i++] = 1;
+                data[i++] = 0;
+                SeparateFloatToChar(data, &i, digit);
+            }
             else
             {
-                wrong_command = 1;
+                errno = ErrorCode::ERRCOMMAND;
             }
         }
         else if (sscanf(p[k], "%s %s", command, reg) == 2)
@@ -206,8 +259,8 @@ void BeginingIdentity(FILE* dfile, char** p, int lines, char data_labels[][10], 
                 {
                     if (strlen(data_labels[p]) == 0)
                     {
-                        printf("Labels not found\n");
-                        exit(5);
+                        FileLogComp("Labels not found\n");
+                        errno = ErrorCode::ERRLABEL;
                     }
                     if (!strcmp(reg, data_labels[p]))
                     {
@@ -217,9 +270,17 @@ void BeginingIdentity(FILE* dfile, char** p, int lines, char data_labels[][10], 
                 }
                 ret_index = i;
             }
+            else if (!strcmp(command, "out"))
+            {
+                data[i++] = Command::OUT;
+                data[i++] = 1;
+                data[i++] = 0;
+                data[i++] = 0;
+                FillRegField(data, &i, reg);
+            }
             else
             {
-                wrong_command = 1;
+                errno = ErrorCode::ERRCOMMAND;
             }
         }
         else if (sscanf(p[k], "%s", command) == 1)
@@ -227,6 +288,13 @@ void BeginingIdentity(FILE* dfile, char** p, int lines, char data_labels[][10], 
             if (!strcmp(command, "pop"))
             {
                 data[i++] = Command::POP;
+                data[i++] = 0;
+                data[i++] = 0;
+                data[i++] = 0;
+            }
+            else if (!strcmp(command, "out"))
+            {
+                data[i++] = Command::OUT;
                 data[i++] = 0;
                 data[i++] = 0;
                 data[i++] = 0;
@@ -251,10 +319,6 @@ void BeginingIdentity(FILE* dfile, char** p, int lines, char data_labels[][10], 
             {
                 data[i++] = Command::SQRT;
             }
-            else if (!strcmp(command, "out"))
-            {
-                data[i++] = Command::OUT;
-            }
             else if (!strcmp(command, "dmp"))
             {
                 data[i++] = Command::DMP;
@@ -267,35 +331,41 @@ void BeginingIdentity(FILE* dfile, char** p, int lines, char data_labels[][10], 
             {
                 data[i++] = Command::RET;
             }
+            else if (!strcmp(command, "in"))
+            {
+                data[i++] = Command::IN;
+            }
             else
             {
-                wrong_command = 1;
+                errno = ErrorCode::ERRCOMMAND;
             }
         }
-        if (wrong_command)
+        if (errno)
         {
             int n = 0;
             sscanf(p[k], "%[^:]:%n", command, &n);
             if (!n)
             {
-                printf("Wrong command was getted \"%s\"\n", command);
-                exit(3);
+                FileLogComp("Wrong command was getted \"%s\"\n", command);
+                return -1;
             }
         }
         size = i;
     }
     fwrite(data, sizeof(char), size, dfile);
     free(data);
+    return 0;
 }
 
 
-void CompilingFile(char* file_name, char* binary_file)
+int CompilingFile(char* file_name, char* binary_file)
 {
     FILE* file = fopen(file_name, "rb");
     if (file == NULL)
     {
-        fputs("Error file open\n", stderr);
-        exit(1);
+        FileLogComp("Error file open\n");
+        errno = ErrorCode::ERRFILE;
+        return -1;
     }
 
     int syms = CountSymbols(file);
@@ -307,16 +377,18 @@ void CompilingFile(char* file_name, char* binary_file)
     char** p = (char**)calloc(lines, sizeof(char*));
     if (p == NULL)
     {
-        fputs("Error memory allocation for **p\n", stderr);
-        exit(2);
+        FileLogComp("Error memory allocation for **p\n");
+        errno = ErrorCode::ERRMEMORY;
+        return -1;
     }
     for (int i = 0; i < lines; i++)
     {
         p[i] = (char*)calloc(100, sizeof(char));
         if (p[i] == NULL)
         {
-            fputs("Error memory allocation for *p\n", stderr);
-            exit(2);
+            FileLogComp("Error memory allocation for *p\n");
+            errno = ErrorCode::ERRMEMORY;
+            return -1;
         }
     }
 
@@ -326,8 +398,9 @@ void CompilingFile(char* file_name, char* binary_file)
     FILE* dfile = fopen(binary_file, "w");
     if (dfile == NULL)
     {
-        fputs("Error file open\n", stderr);
-        exit(1);
+        FileLogComp("Error file open\n");
+        errno = ErrorCode::ERRFILE;
+        return -1;
     }
     char data_labels[10][10] = {};
     int adress[10] = {};
@@ -341,6 +414,7 @@ void CompilingFile(char* file_name, char* binary_file)
     }
     fclose(dfile);
     free(p);
+    return 0;
 }
 
 void FillRegField(char* data, int* i, char* reg)
@@ -401,7 +475,7 @@ void PreIdentity(char** p, int lines, char data_labels[][10], int adress[])
             {
                 i += 9;
             }
-            else if (!strcmp(one, "in"))
+            else if (!strcmp(one, "mov"))
             {
                 i += 6;
             }

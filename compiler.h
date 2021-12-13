@@ -14,20 +14,22 @@ enum Command
     OUT,
     DMP,
     HLT = 11,
-    IN,
+    MOV,
     JMP,
     JA,
     CALL,
-    RET
+    RET,
+    IN
 };
 
 
-enum CommandSize
+enum ErrorCode
 {
-    SIMPLEPUSH = 5,
-    SIMPLEPOP = 4,
-    DIFPOP = 9,
-    DIFPUSH = 8,
+    ERRCOMMAND = 1,
+    ERRPOINTER,
+    ERRMEMORY,
+    ERRFILE,
+    ERRLABEL
 };
 
 
@@ -41,7 +43,10 @@ union types
 /// <summary>
 /// Create file with binary code
 /// </summary>
-void CompilingFile(char* file_name, char* binary_file);
+int CompilingFile(char* file_name, char* binary_file);
+
+
+void FileLogComp(const char* format, ...);
 
 
 /// <summary>
@@ -50,7 +55,7 @@ void CompilingFile(char* file_name, char* binary_file);
 /// <param name="dfile">Transmitted binary file</param>
 /// <param name="p">Data array</param>
 /// <param name="lines">Number of lines in data</param>
-void BeginingIdentity(FILE* dfile, char** p, int lines, char data_labels[][10], int adress[]);
+int BeginingIdentity(FILE* dfile, char** p, int lines, char data_labels[][10], int adress[]);
 
 
 /// <summary>
