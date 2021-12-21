@@ -2,8 +2,7 @@
 #include <stdio.h>
 
 
-enum Command
-{
+enum Command{
     PUSH = 1,
     POP,
     ADD,
@@ -23,8 +22,7 @@ enum Command
 };
 
 
-enum ErrorCode
-{
+enum ErrorCode{
     ERRCOMMAND = 1,
     ERRPOINTER,
     ERRMEMORY,
@@ -33,8 +31,7 @@ enum ErrorCode
 };
 
 
-union types
-{
+union types{
 	float f;
 	unsigned char b[4];
 };
