@@ -43,6 +43,11 @@ union types{
 int CompilingFile(char* file_name, char* binary_file);
 
 
+/// <summary>
+/// Write data to the log file
+/// </summary>
+/// <param name="format">Format writing data</param>
+/// <param name="">Params for writing</param>
 void FileLogComp(const char* format, ...);
 
 
@@ -62,18 +67,6 @@ int BeginingIdentity(FILE* dfile, char** p, int lines, char data_labels[][10], i
 /// <param name="i">Current position in data array</param>
 /// <param name="reg">Name of register</param>
 void FillRegField(char* data, int* i, char* reg);
-
-
-/// <summary>
-/// Separate int figure to 4 char type
-/// </summary>
-/// <param name="data">Data array</param>
-/// <param name="i">Current position in data array</param>
-/// <param name="digit">Transmitted figure</param>
-void SeparateFloatToChar(char* data, int* i, float digit);
-
-
-void SeparateIntToChar(char* data, int* i, int digit);
 
 
 /// <summary>
