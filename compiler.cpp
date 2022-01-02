@@ -8,8 +8,8 @@
 #include <stdarg.h>
 
 #define CommandMask(command, b1, b2, b3)\
-data[i++] = command; data[i++] = b1;\
-data[i++] = b2; data[i++] = b3;
+data_ptr[i++] = command; data_ptr[i++] = b1;\
+data_ptr[i++] = b2; data_ptr[i++] = b3;
 
 
 //Max size of CMD command
@@ -28,8 +28,13 @@ const int LABELS_ARR_SIZE = 10;
 const int LABELS_SIZE = 10;
 
 
-void FileLogComp(const char* format, ...)
-{
+typedef struct Label{
+    char name[LABELS_SIZE] = {};
+    int position = 0;
+}Label;
+
+
+void FileLogComp(const char* format, ...){
     static FILE* log_file = fopen("comp_log.txt", "w");
     va_list args;
     va_start(args, format);
@@ -38,44 +43,50 @@ void FileLogComp(const char* format, ...)
 }
 
 
-int BeginingIdentity(FILE* dfile, char** sp_str, int lines, char data_labels[][10], int adress[])
-{
-    char* data = (char*)calloc(lines * COMMAND_SYMS, sizeof(char));
-
-    if (data == NULL)
-    {
-        FileLogComp("Error memory allocation for *data\n");
-        errno = ErrorCode::ERRMEMORY;
-        return -1;
-    }
+int ParseLine(char* data_ptr, char** line, Label* labels, int lines){
     char command[COMMAND_SIZE] = {};
     float digit = 0;
     char reg[REG_SIZE] = {};
-    int size = 0;
-    for (int i = 0, k = 0; k < lines; k++)
+    int n_lab = 0;
+    int i = 0;
+    for (int k = 0; k < lines; k++)
     {
         bool flag = 1;
-        if (sscanf(sp_str[k], "%s [%s + %f]", command, reg, &digit) == 3){
+        if (sscanf(line[k], "%s [%s + %f]", command, reg, &digit) == 3) {
             if (!(flag = strcmp(command, "pop"))) {
-                CommandMask(Command::POP, 1, 1, 1);
+                if (!data_ptr)
+                    i += 9;
+                else {
+                    CommandMask(Command::POP, 1, 1, 1);
+                }
             }
             else if (!(flag = strcmp(command, "push"))) {
-                CommandMask(Command::PUSH, 1, 1, 1);
+                if (!data_ptr)
+                    i += 5;
+                else {
+                    CommandMask(Command::PUSH, 1, 1, 1);
+                }
             }
             else if (!(flag = strcmp(command, "out"))) {
-                CommandMask(Command::OUT, 1, 1, 1);
+                if (!data_ptr)
+                    i += 5;
+                else {
+                    CommandMask(Command::OUT, 1, 1, 1);
+                }
             }
             else
                 errno = ErrorCode::ERRCOMMAND;
-            if (!flag) {
-                FillRegField(data, &i, reg);
-                *((float*)&data[i]) = digit;
+            if (!flag && data_ptr) {
+                FillRegField(data_ptr, &i, reg);
+                *((float*)&data_ptr[i]) = digit;
                 i += sizeof(float);
             }
         }
-        else if (sscanf(sp_str[k], "%s %s + %f", command, reg, &digit) == 3)
+        else if (sscanf(line[k], "%s %s + %f", command, reg, &digit) == 3)
         {
-            if (!(flag = strcmp(command, "push"))) {
+            if (!data_ptr)
+                i += 9;
+            else if (!(flag = strcmp(command, "push"))) {
                 CommandMask(Command::PUSH, 1, 1, 0);
             }
             else if (!(flag = strcmp(command, "out"))) {
@@ -83,26 +94,30 @@ int BeginingIdentity(FILE* dfile, char** sp_str, int lines, char data_labels[][1
             }
             else
                 errno = ErrorCode::ERRCOMMAND;
-            if (!flag) {
-                FillRegField(data, &i, reg);
-                *((float*)&data[i]) = digit;
+            if (!flag && data_ptr) {
+                FillRegField(data_ptr, &i, reg);
+                *((float*)&data_ptr[i]) = digit;
                 i += sizeof(float);
             }
         }
-        else if (sscanf(sp_str[k], "%s %[^,],%f", command, reg, &digit) == 3)
+        else if (sscanf(line[k], "%s %[^,],%f", command, reg, &digit) == 3)
         {
-            if (!strcmp(command, "mov")) {
-                data[i++] = Command::MOV;
-                FillRegField(data, &i, reg);
-                *((float*)&data[i]) = digit;
+            if (!data_ptr)
+                i += 6;
+            else if (!strcmp(command, "mov")) {
+                data_ptr[i++] = Command::MOV;
+                FillRegField(data_ptr, &i, reg);
+                *((float*)&data_ptr[i]) = digit;
                 i += sizeof(float);
             }
             else
                 errno = ErrorCode::ERRCOMMAND;
         }
-        else if (sscanf(sp_str[k], "%s [%f]", command, &digit) == 2)
+        else if (sscanf(line[k], "%s [%f]", command, &digit) == 2)
         {
-            if (!(flag = strcmp(command, "pop"))) {
+            if (!data_ptr)
+                i += 8;
+            else if (!(flag = strcmp(command, "pop"))) {
                 CommandMask(Command::POP, 0, 1, 1);
             }
             else if (!(flag = strcmp(command, "push"))) {
@@ -113,14 +128,16 @@ int BeginingIdentity(FILE* dfile, char** sp_str, int lines, char data_labels[][1
             }
             else
                 errno = ErrorCode::ERRCOMMAND;
-            if (!flag) {
-                *((float*)&data[i]) = digit;
+            if (!flag && data_ptr) {
+                *((float*)&data_ptr[i]) = digit;
                 i += sizeof(float);
             }
         }
-        else if (sscanf(sp_str[k], "%s [%s]", command, reg) == 2)
+        else if (sscanf(line[k], "%s [%s]", command, reg) == 2)
         {
-            if (!(flag = strcmp(command, "pop"))) {
+            if (!data_ptr)
+                i += 5;
+            else if (!(flag = strcmp(command, "pop"))) {
                 CommandMask(Command::POP, 1, 0, 1);
             }
             else if (!(flag = strcmp(command, "push"))) {
@@ -131,104 +148,145 @@ int BeginingIdentity(FILE* dfile, char** sp_str, int lines, char data_labels[][1
             }
             else
                 errno = ErrorCode::ERRCOMMAND;
-            if (!flag)
-                FillRegField(data, &i, reg);
+            if (!flag && data_ptr)
+                FillRegField(data_ptr, &i, reg);
         }
-        else if (sscanf(sp_str[k], "%s %f", command, &digit) == 2)
+        else if (sscanf(line[k], "%s %f", command, &digit) == 2)
         {
             if (!(flag = strcmp(command, "push"))) {
-                CommandMask(Command::PUSH, 0, 1, 0);
+                if (!data_ptr)
+                    i += 8;
+                else {
+                    CommandMask(Command::PUSH, 0, 1, 0);
+                }
             }
             else if (!(flag = strcmp(command, "out"))) {
-                CommandMask(Command::OUT, 0, 1, 0);
+                if (!data_ptr)
+                    i += 8;
+                else {
+                    CommandMask(Command::OUT, 0, 1, 0);
+                }
             }
             else if (!(flag = strcmp(command, "jmp"))) {
-                data[i++] = Command::JMP;
+                if (!data_ptr)
+                    i += 5;
+                else {
+                    data_ptr[i++] = Command::JMP;
+                }
             }
             else
                 errno = ErrorCode::ERRCOMMAND;
-            if (!flag) {
-                *((float*)&data[i]) = digit;
+            if (!flag && data_ptr) {
+                *((float*)&data_ptr[i]) = digit;
                 i += sizeof(float);
             }
         }
-        else if (sscanf(sp_str[k], "%s %s", command, reg) == 2)
+        else if (sscanf(line[k], "%s %s", command, reg) == 2)
         {
             int cndtnl_labl = -1;
-            if (!(flag = strcmp(command, "pop"))){
+            if (!data_ptr)
+                i += 5;
+            else if (!(flag = strcmp(command, "pop"))) {
                 CommandMask(Command::POP, 1, 0, 0);
             }
-            else if (!(flag = strcmp(command, "push"))){
+            else if (!(flag = strcmp(command, "push"))) {
                 CommandMask(Command::PUSH, 1, 0, 0);
             }
             else if (!(flag = strcmp(command, "out"))) {
                 CommandMask(Command::OUT, 1, 0, 0);
             }
             else if (!(cndtnl_labl = strcmp(command, "jmp")))
-                data[i++] = Command::JMP;
+                data_ptr[i++] = Command::JMP;
             else if (!(cndtnl_labl = strcmp(command, "ja")))
-                data[i++] = Command::JA;
+                data_ptr[i++] = Command::JA;
             else if (!(cndtnl_labl = strcmp(command, "call")))
-                data[i++] = Command::CALL;
+                data_ptr[i++] = Command::CALL;
             else
                 errno = ErrorCode::ERRCOMMAND;
-            if (!cndtnl_labl){
-                for (int sp_str = 0; sp_str < LABELS_ARR_SIZE; sp_str++){
-                    if (strlen(data_labels[sp_str]) == 0){
+            if (!cndtnl_labl && data_ptr) {
+                for (int sp_str = 0; sp_str < LABELS_ARR_SIZE; sp_str++) {
+                    if (strlen(labels[sp_str].name) == 0) {
                         FileLogComp("Labels not found\n");
                         errno = ErrorCode::ERRLABEL;
                     }
-                    if (!strcmp(reg, data_labels[sp_str])){
-                        *((int*)&data[i]) = adress[sp_str];
+                    if (!strcmp(reg, labels[sp_str].name)) {
+                        *((int*)&data_ptr[i]) = labels[sp_str].position;
                         i += sizeof(int);
                         break;
                     }
                 }
             }
-            if (!flag)
-                FillRegField(data, &i, reg);
+            if (!flag && data_ptr)
+                FillRegField(data_ptr, &i, reg);
         }
-        else if (sscanf(sp_str[k], "%s", command) == 1){
-            if (!strcmp(command, "pop")){
-                CommandMask(Command::POP, 0, 0, 0);
+        else if (sscanf(line[k], "%s", command) == 1) {
+            char label[LABELS_SIZE] = {};
+            int n = 0;
+            sscanf(line[k], "%[^:]:%n", label, &n);
+            if (!data_ptr && n) {
+                strcpy(labels[n_lab].name, label);
+                labels[n_lab].position = i;
+                n_lab++;
             }
-            else if (!strcmp(command, "out")){
-                CommandMask(Command::OUT, 0, 0, 0);
+            else if (!strcmp(command, "pop")) {
+                if (!data_ptr)
+                    i += 4;
+                else {
+                    CommandMask(Command::POP, 0, 0, 0);
+                }
             }
+            else if (!strcmp(command, "out")) {
+                if (!data_ptr)
+                    i += 4;
+                else {
+                    CommandMask(Command::OUT, 0, 0, 0);
+                }
+            }
+            else if (!data_ptr)
+                i++;
             else if (!strcmp(command, "add"))
-                data[i++] = Command::ADD;
+                data_ptr[i++] = Command::ADD;
             else if (!strcmp(command, "sub"))
-                data[i++] = Command::SUB;
+                data_ptr[i++] = Command::SUB;
             else if (!strcmp(command, "mul"))
-                data[i++] = Command::MUL;
+                data_ptr[i++] = Command::MUL;
             else if (!strcmp(command, "div"))
-                data[i++] = Command::DIV;
+                data_ptr[i++] = Command::DIV;
             else if (!strcmp(command, "sqrt"))
-                data[i++] = Command::SQRT;
+                data_ptr[i++] = Command::SQRT;
             else if (!strcmp(command, "dmp"))
-                data[i++] = Command::DMP;
+                data_ptr[i++] = Command::DMP;
             else if (!strcmp(command, "hlt"))
-                data[i++] = Command::HLT;
+                data_ptr[i++] = Command::HLT;
             else if (!strcmp(command, "ret"))
-                data[i++] = Command::RET;
+                data_ptr[i++] = Command::RET;
             else if (!strcmp(command, "in"))
-                data[i++] = Command::IN;
+                data_ptr[i++] = Command::IN;
             else
                 errno = ErrorCode::ERRCOMMAND;
         }
-        if (errno){
-            int n = 0;
-            sscanf(sp_str[k], "%[^:]:%n", command, &n);
-            if (!n) {
-                FileLogComp("Wrong command was getted \"%s\"\n", command);
-                return -1;
-            }
-            else
-                lines--;
-            errno = 0;
-        }
-        size = i;
     }
+    return i;
+}
+
+
+int Identity(FILE* dfile, char** sp_str, int lines){
+    char* data = (char*)calloc(lines * COMMAND_SYMS, sizeof(char));
+
+    if (data == NULL){
+        FileLogComp("Error memory allocation for *data\n");
+        errno = ErrorCode::ERRMEMORY;
+        return -1;
+    }
+
+    Label* labels = (Label*)calloc(LABELS_ARR_SIZE, sizeof(Label));
+    if (labels == NULL){
+        FileLogComp("Error memory allocation for *labels\n");
+        errno = ErrorCode::ERRMEMORY;
+        return -1;
+    }
+    ParseLine(NULL, sp_str, labels, lines);
+    int size = ParseLine(data, sp_str, labels, lines);
     fwrite(data, sizeof(char), size, dfile);
     free(data);
     return 0;
@@ -272,11 +330,7 @@ int CompilingFile(char* file_name, char* binary_file){
         errno = ErrorCode::ERRFILE;
         return -1;
     }
-    char data_labels[LABELS_ARR_SIZE][LABELS_SIZE] = {};
-    int adress[LABELS_ARR_SIZE] = {};
-
-    PreIdentity(sp_str, lines, data_labels, adress);
-    BeginingIdentity(dfile, sp_str, lines, data_labels, adress);
+    Identity(dfile, sp_str, lines);
 
     for (int i = 0; i < lines; i++)
         free(sp_str[i]);
@@ -293,53 +347,4 @@ void FillRegField(char* data, int* i, char* reg){
         data[(*i)++] = 2;
     else if (!strcmp(reg, "cx"))
         data[(*i)++] = 3;
-}
-
-
-void PreIdentity(char** sp_str, int lines, char data_labels[][10], int adress[]){
-    int n = 0;
-    char label[LABELS_SIZE];
-    char arg_1[COMMAND_SIZE] = {};
-    char arg_2[COMMAND_SIZE] = {};
-    char arg_3[COMMAND_SIZE] = {};
-    float dig = 0;
-    int i = 0;
-    int n_lab = 0;
-    for (int k = 0; k < lines; k++){
-        if (sscanf(sp_str[k], "%s [%s + %s]", arg_1, arg_2, arg_3) == 3 || sscanf(sp_str[k], "%s %[^,],%f", arg_1, arg_2, &dig) == 3){
-            if (!strcmp(arg_1, "push") || !strcmp(arg_1, "out"))
-                i += 5;
-            else if (!strcmp(arg_1, "pop"))
-                i += 9;
-            else if (!strcmp(arg_1, "mov"))
-                i += 6;
-        }
-        else if (sscanf(sp_str[k], "%s %s + %s", arg_1, arg_2, arg_3) == 3)
-            i += 9;
-        else if (sscanf(sp_str[k], "%s [%f]", arg_1, &dig) == 2 || sscanf(sp_str[k], "%s %f", arg_1, &dig) == 2){
-            if (!strcmp(arg_1, "push") || !strcmp(arg_1, "pop") || !strcmp(arg_1, "out"))
-                i += 8;
-            else if (!strcmp(arg_1, "jmp"))
-                i += 5;
-        }
-        else if (sscanf(sp_str[k], "%s [%s]", arg_1, arg_2) == 2 || sscanf(sp_str[k], "%s %s", arg_1, arg_2) == 2)
-            i += 5;
-        else if (sscanf(sp_str[k], "%s", arg_1) == 1){
-            sscanf(sp_str[k], "%[^:]:%n", label, &n);
-            if (n != 0){
-                n = 0;
-                int sp_str = 0;
-                for (sp_str; sp_str < strlen(label); sp_str++)
-                    data_labels[n_lab][sp_str] = label[sp_str];
-                data_labels[n_lab][++sp_str] = '\0';
-                adress[n_lab] = i;
-                n_lab++;
-            }
-            else if (!strcmp(arg_1, "pop") || !strcmp(arg_1, "out"))
-                i += 4;
-            else
-                i++;
-        }
-
-    }
 }

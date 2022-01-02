@@ -2,6 +2,8 @@
 #include <stdio.h>
 
 
+typedef struct Label Label;
+
 enum Command{
     PUSH = 1,
     POP,
@@ -38,12 +40,6 @@ union types{
 
 
 /// <summary>
-/// Create file with binary code
-/// </summary>
-int CompilingFile(char* file_name, char* binary_file);
-
-
-/// <summary>
 /// Write data to the log file
 /// </summary>
 /// <param name="format">Format writing data</param>
@@ -52,12 +48,30 @@ void FileLogComp(const char* format, ...);
 
 
 /// <summary>
+/// Parse transmitted line and count byte size of programm
+/// </summary>
+/// <param name="data_ptr">Transmitted pointer to data rot writing to file or NULL pointer</param>
+/// <param name="line">Set of lines from a reading file</param>
+/// <param name="labels">Array for writing labels</param>
+/// <param name="lines">Number of lines in a programm</param>
+/// <returns>Byte size of programm</returns>
+int ParseLine(char* data_ptr, char** line, Label* labels, int lines);
+
+
+/// <summary>
 /// Detect comand variations in the transmitted array by digital commands and write it to file
 /// </summary>
 /// <param name="dfile">Transmitted binary file</param>
-/// <param name="p">Data array</param>
+/// <param name="sp_str">Data array</param>
 /// <param name="lines">Number of lines in data</param>
-int BeginingIdentity(FILE* dfile, char** p, int lines, char data_labels[][10], int adress[]);
+/// <returns>-1 if an error occured, else -1</returns>
+int Identity(FILE* dfile, char** sp_str, int lines);
+
+
+/// <summary>
+/// Create file with binary code
+/// </summary>
+int CompilingFile(char* file_name, char* binary_file);
 
 
 /// <summary>
@@ -67,13 +81,3 @@ int BeginingIdentity(FILE* dfile, char** p, int lines, char data_labels[][10], i
 /// <param name="i">Current position in data array</param>
 /// <param name="reg">Name of register</param>
 void FillRegField(char* data, int* i, char* reg);
-
-
-/// <summary>
-/// Check existence of labels and count size of every command
-/// </summary>
-/// <param name="p">Lines of data</param>
-/// <param name="lines">Number of lines</param>
-/// <param name="data_labels">Array of found labels</param>
-/// <param name="adress">Index of found labels</param>
-void PreIdentity(char** p, int lines, char data_labels[][10], int adress[]);
